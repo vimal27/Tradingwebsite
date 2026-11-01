@@ -131,6 +131,7 @@
     .search { width: min(270px, 48vw); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; color: var(--ink); outline: 0; font-size: 11px; }
     .search:focus, .field input:focus, .field select:focus, .field textarea:focus { border-color: #79b9aa; box-shadow: 0 0 0 3px #16856d12; }
     .table-wrap { overflow-x: auto; }
+    .table-wrap table { min-width: 760px; }
     table { width: 100%; border-collapse: collapse; white-space: nowrap; }
     th { text-align: left; padding: 11px 16px; background: #fafbfd; color: #8a97a7; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; }
     td { padding: 13px 16px; border-top: 1px solid #f0f2f5; font-size: 11px; color: #495a70; }
@@ -277,6 +278,22 @@
       .pbi-grid { grid-template-columns: 1fr; }
       .range-bar { align-items: flex-start; flex-direction: column; }
       .filter-right { width: 100%; }
+      .filter-right .select { flex: 1; min-width: 0; }
+      .table-card { overflow: hidden; }
+      .table-toolbar { align-items: flex-start; flex-wrap: wrap; }
+      .table-toolbar > * { max-width: 100%; }
+      .search { width: 100%; }
+      .date-filters { width: 100%; }
+      .date-filters label { flex: 1; min-width: 132px; }
+      .date-filters input { width: 100%; min-width: 0; }
+      .notice { font-size: 10px; line-height: 1.55; }
+      .table-wrap { margin-right: -1px; }
+      .table-wrap th, .table-wrap td { padding: 9px 10px; white-space: nowrap; }
+      .donation-input { width: 92px; }
+      .page-head .head-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .page-head .head-tools .btn { width: 100%; }
+      .modal { align-items: flex-end; padding: 0; }
+      .modal-panel { width: 100%; max-height: 92vh; border-radius: 16px 16px 0 0; }
     }
     @media (max-width: 450px) {
       h1 { font-size: 23px; }
@@ -295,6 +312,24 @@
       .sprint-form-grid .full { grid-column: auto; }
       .donut-layout { gap: 13px; }
       .donut-box { width: 126px; height: 126px; }
+      .sidebar { width: 54px; padding-left: 5px; padding-right: 5px; }
+      main { margin-left: 54px; }
+      .topbar { padding: 0 10px; }
+      .content { padding: 18px 9px 30px; }
+      .crumb { font-size: 11px; }
+      .top-actions { gap: 5px; }
+      .top-actions .btn { padding: 8px; }
+      .metrics { grid-template-columns: 1fr 1fr; }
+      .metric { padding: 12px; min-height: 108px; }
+      .metric-value { font-size: 18px; }
+      .metric-foot { font-size: 9px; }
+      .card { border-radius: 10px; }
+      .chart-card { padding: 14px 12px 10px; }
+      .donut-layout { flex-direction: column; height: auto; padding: 12px 0; }
+      .legend { width: 100%; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .legend-row { grid-template-columns: 7px auto; }
+      .legend-row strong { grid-column: 2; }
+      .table-card .table-toolbar { padding: 13px 12px; }
     }
   </style>
 </head>
@@ -314,7 +349,7 @@
       <button class="nav-item" data-page="insights"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h17"/><path d="M7 15l4-5 3 2 5-7"/></svg><span>Trade review</span></button>
       <button class="nav-item" data-page="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06-1.7 2.94-.08-.02a1.7 1.7 0 00-1.73.52l-.05.06h-3.4l-.05-.07a1.7 1.7 0 00-1.73-.51l-.08.02-1.7-2.94.06-.06A1.7 1.7 0 007.7 15l-.02-.08v-3.4l.07-.05a1.7 1.7 0 00.51-1.73l-.02-.08 2.94-1.7.06.06a1.7 1.7 0 001.87.34l.08-.02h3.4l.05.07a1.7 1.7 0 001.73.51l.08-.02 1.7 2.94-.06.06a1.7 1.7 0 00-.34 1.87z"/></svg><span>Data & settings</span></button>
     </nav>
-    <div class="side-foot"><div class="local-status"><i></i>Stored on this device</div>Private by design. No account, server, or cloud sync.</div>
+    <div class="side-foot"><div class="local-status"><i></i>Cloud sync enabled</div>Protected R2 storage with local fallback.</div>
   </aside>
   <main>
     <header class="topbar">
