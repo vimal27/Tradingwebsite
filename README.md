@@ -38,3 +38,15 @@ Use **Data & settings → Download JSON backup** regularly. The page shows the a
 4. Configure the `LEDGER_DATA` R2 binding for the project using the binding name in `wrangler.toml`.
 5. Deploy the site and protect it with a Cloudflare Access application.
 6. Open the site while signed in through Access. The first successful save creates or updates the R2 JSON document.
+
+## Simple password protection
+
+The Worker supports HTTP Basic Authentication for a small personal deployment. The username is `Vimal`; set a new password as a Cloudflare Worker secret named `AUTH_PASSWORD`. Do not reuse a password shared in chat or commit a password to GitHub.
+
+With Wrangler:
+
+```text
+npx wrangler secret put AUTH_PASSWORD
+```
+
+Enter the new password when prompted, then deploy again. The browser will show its normal username/password prompt, and the same login protects the site and `/api/data`. If `AUTH_PASSWORD` is not configured, the Worker fails closed and does not expose the journal.
