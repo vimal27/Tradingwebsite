@@ -1,5 +1,10 @@
 name = "tradingwebsite"
 compatibility_date = "2026-11-01"
+main = "worker.js"
+
+[assets]
+directory = "."
+binding = "ASSETS"
 
 [[r2_buckets]]
 binding = "LEDGER_DATA"

@@ -33,7 +33,8 @@ Use **Data & settings → Download JSON backup** regularly. The page shows the a
 ## Cloudflare Pages + R2 setup
 
 1. Create an R2 bucket named `tradingwebsite-data`.
-2. Connect this repository to Cloudflare Pages.
-3. Configure the `LEDGER_DATA` R2 binding for the Pages project using the binding name in `wrangler.toml`.
-4. Deploy the site and protect the Pages project with a Cloudflare Access application. The Pages Function at `/api/data` uses the R2 object `ledger.json`.
-5. Open the site while signed in through Access. The first successful save creates or updates the R2 JSON document.
+2. Connect this repository to Cloudflare Workers & Pages, or deploy it as a Worker using the included `wrangler.toml`.
+3. Keep the deploy command as `npx wrangler deploy`; `worker.js` serves the static site and `/api/data` uses the R2 object `ledger.json`.
+4. Configure the `LEDGER_DATA` R2 binding for the project using the binding name in `wrangler.toml`.
+5. Deploy the site and protect it with a Cloudflare Access application.
+6. Open the site while signed in through Access. The first successful save creates or updates the R2 JSON document.
