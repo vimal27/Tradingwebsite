@@ -1,4 +1,5 @@
 const OBJECT_KEY = "ledger.json";
+const AUTH_USERNAME = "Vimal";
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -22,6 +23,31 @@ function validState(value) {
     value.donations &&
     typeof value.donations === "object" &&
     !Array.isArray(value.donations);
+}
+
+function unauthorized() {
+  return new Response("Authentication required.", {
+    status: 401,
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "www-authenticate": 'Basic realm="Ledger"'
+    }
+  });
+}
+
+function isAuthorized(request, env) {
+  if (!env.AUTH_PASSWORD) return false;
+  const header = request.headers.get("authorization") || "";
+  if (!header.startsWith("Basic ")) return false;
+  try {
+    const decoded = atob(header.slice(6));
+    const separator = decoded.indexOf(":");
+    return separator > 0 &&
+      decoded.slice(0, separator) === AUTH_USERNAME &&
+      decoded.slice(separator + 1) === env.AUTH_PASSWORD;
+  } catch {
+    return false;
+  }
 }
 
 async function dataApi(request, env) {
@@ -65,6 +91,9 @@ async function dataApi(request, env) {
 
 export default {
   async fetch(request, env) {
+    if (!isAuthorized(request, env)) {
+      return env.AUTH_PASSWORD ? unauthorized() : json({ error: "Authentication is not configured." }, 503);
+    }
     const url = new URL(request.url);
     if (url.pathname === "/api/data") return dataApi(request, env);
     return env.ASSETS.fetch(request);
