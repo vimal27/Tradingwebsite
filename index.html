@@ -522,6 +522,7 @@
   const BACKUP_AT_KEY = "ledger.backup-at.v1";
   const NSE_HOLIDAYS_KEY = "ledger.nse-holidays.v1";
   const DONATIONS_KEY = "ledger.donations.v1";
+  const CLOUD_DATA_ENDPOINT = "/api/data";
   const BUILT_IN_NSE_HOLIDAYS = [
     "2026-01-15", "2026-01-26", "2026-03-03", "2026-03-26", "2026-03-31",
     "2026-04-03", "2026-04-14", "2026-05-01", "2026-05-28", "2026-06-26",
@@ -544,6 +545,8 @@
   let toastTimer;
   let multiplierManuallyChanged = false;
   const editingDonationMonths = new Set();
+  let cloudSyncReady = false;
+  let cloudSaveTimer;
   let renderCoach = () => {};
 
   function loadTrades() {
@@ -575,7 +578,62 @@
   function persist() {
     try { localStorage.setItem(KEY, JSON.stringify(trades)); }
     catch (error) { console.error("Could not save the local trading journal.", error); showToast("Save failed. Export a backup or free browser storage space."); return false; }
+    queueCloudSave();
     return true;
+  }
+  function cloudState() {
+    return { trades, agile, nseHolidays: additionalNseHolidays, donations };
+  }
+  function queueCloudSave() {
+    if (!cloudSyncReady) return;
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(async () => {
+      try {
+        const result = await fetch(CLOUD_DATA_ENDPOINT, {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(cloudState())
+        });
+        if (!result.ok) throw new Error(`Cloud save failed with HTTP ${result.status}.`);
+      } catch (error) {
+        console.error("Could not save Ledger data to Cloudflare R2.", error);
+        showToast("Cloud save failed. Your local copy is still available.");
+      }
+    }, 350);
+  }
+  async function loadCloudState() {
+    try {
+      const result = await fetch(CLOUD_DATA_ENDPOINT, { cache: "no-store" });
+      if (!result.ok) throw new Error(`Cloud load failed with HTTP ${result.status}.`);
+      const stored = await result.json();
+      if (!stored || !Array.isArray(stored.trades) || !stored.agile || !Array.isArray(stored.agile.sprints) || !Array.isArray(stored.agile.scrum) || !Array.isArray(stored.nseHolidays) || !stored.donations) throw new Error("Cloud data has an invalid format.");
+      const cloudTrades = stored.trades.map(normalizeTrade).filter(Boolean);
+      if (stored.trades.length && !cloudTrades.length) throw new Error("Cloud trade data has no valid records.");
+      if (stored.initialized === false && (trades.length || agile.sprints.length)) {
+        cloudSyncReady = true;
+        queueCloudSave();
+        return;
+      }
+      trades = cloudTrades;
+      agile = {
+        sprints: stored.agile.sprints,
+        activeSprintId: stored.agile.activeSprintId || stored.agile.sprints.find(s => s.status === "active")?.id || "",
+        scrum: stored.agile.scrum,
+        scrumSessions: Array.isArray(stored.agile.scrumSessions) ? stored.agile.scrumSessions : [],
+        planningHistory: Array.isArray(stored.agile.planningHistory) ? stored.agile.planningHistory : [],
+        reviewHistory: Array.isArray(stored.agile.reviewHistory) ? stored.agile.reviewHistory : [],
+        retrospectiveHistory: Array.isArray(stored.agile.retrospectiveHistory) ? stored.agile.retrospectiveHistory : []
+      };
+      additionalNseHolidays = stored.nseHolidays.filter(isIsoDate);
+      donations = Object.fromEntries(Object.entries(stored.donations).filter(([month, amount]) => /^\d{4}-\d{2}$/.test(month) && Number.isFinite(Number(amount)) && Number(amount) >= 0).map(([month, amount]) => [month, Number(amount)]));
+      selectedSprintId = agile.activeSprintId || agile.sprints[0]?.id || "";
+      currentCoachSessionId = agile.scrumSessions.find(s => !s.completed)?.id || "";
+      cloudSyncReady = true;
+      render();
+    } catch (error) {
+      console.error("Could not load Ledger data from Cloudflare R2.", error);
+      showToast("Cloud data unavailable. Using this browser's local copy.");
+    }
   }
   function isIsoDate(value) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return false;
@@ -599,6 +657,7 @@
   function persistNseHolidays() {
     try { localStorage.setItem(NSE_HOLIDAYS_KEY, JSON.stringify(additionalNseHolidays)); }
     catch (error) { console.error("Could not save local NSE holiday dates.", error); showToast("Holiday dates could not be saved. Check browser storage."); return false; }
+    queueCloudSave();
     return true;
   }
   function loadDonations() {
@@ -617,6 +676,7 @@
   function persistDonations() {
     try { localStorage.setItem(DONATIONS_KEY, JSON.stringify(donations)); }
     catch (error) { console.error("Could not save local donation amounts.", error); showToast("Donation amount could not be saved. Check browser storage."); return false; }
+    queueCloudSave();
     return true;
   }
   function loadAgile() {
@@ -657,6 +717,7 @@
   function persistAgile() {
     try { localStorage.setItem(AGILE_KEY, JSON.stringify(agile)); }
     catch (error) { console.error("Could not save local sprint-planning data.", error); showToast("Sprint data could not be saved. Export a JSON backup and check browser storage."); return false; }
+    queueCloudSave();
     return true;
   }
   function normalizeTrade(t) {
@@ -1663,6 +1724,7 @@
   });
   $("#clearButton").addEventListener("click",()=>{if(!trades.length){showToast("There are no trades to delete.");return;}if(confirm(`Permanently delete all ${trades.length} trades from this browser? Export a backup first if needed.`)){const old=trades;trades=[];if(persist()){try{localStorage.setItem(SEED_CLEARED_KEY,"1");seedCleared=true;}catch(error){console.error("Could not mark the bundled workbook data as cleared.",error);}render();showToast("All trades deleted.");}else trades=old;}});
   render();
+  loadCloudState();
 })();
 </script>
 </body>

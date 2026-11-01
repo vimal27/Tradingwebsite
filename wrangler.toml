@@ -1,0 +1,6 @@
+name = "tradingwebsite"
+compatibility_date = "2026-11-01"
+
+[[r2_buckets]]
+binding = "LEDGER_DATA"
+bucket_name = "tradingwebsite-data"
