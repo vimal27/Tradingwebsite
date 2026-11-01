@@ -698,7 +698,7 @@
   function loadDonations() {
     try {
       const raw = localStorage.getItem(DONATIONS_KEY);
-      if (!raw) return {};
+      if (!raw) return window.LEDGER_SEED?.donations || {};
       const stored = JSON.parse(raw);
       if (!stored || typeof stored !== "object" || Array.isArray(stored)) throw new Error("Saved donation data has an invalid format.");
       return Object.fromEntries(Object.entries(stored).filter(([month, amount]) => /^\d{4}-\d{2}$/.test(month) && Number.isFinite(Number(amount)) && Number(amount) >= 0).map(([month, amount]) => [month, Number(amount)]));
